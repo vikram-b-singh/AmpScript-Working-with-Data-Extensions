@@ -1,0 +1,121 @@
+<!-- Lists all the database operations using ampscript
+ There is data extension 'users' with columns 'Email, Name, Created_Date'. We will insert, update, delete records using various ampscript function -->
+%%[
+ /* Lets check data extension row count using function DataExtensionRowCount()
+This function returns the number of rows in the specified Data Extension. */
+
+VAR @rowCount
+SET @rowCount  = DataExtensionRowCount("Users")
+
+]%%
+<div> rowCount: %%=v(@rowCount)=%%  </div>
+
+<!--
+The INSERTDATA, UPDATEDATA, UPSERTDATA, and DELETEDATA functions allow you to modify data extension data when building landing pages. This functionality differs from the send time functions in the following ways:
+
+Landing page functions execute in real time as they appear in the landing page content.
+Landing page functions return an integer specifying the number of rows affected by the requested execution. For upsert operations, if the initial update affects no rows, the system performs an insert and returns the number of rows affected by the last operation.
+Landing page functions generate an error if they appear in content not built for landing pages.
+If the INSERTDE, UPDATEDE, UPSERTDE, or DELETEDE counterparts appear in landing page content, they will execute in the same manner, except they will not return the number of rows affected. The functions will not execute in a single batch in this context.
+
+-->
+
+<!-- RECORD INSERTION -->
+%%[
+/*Lets insert records using InsertDE and InsertData functions */
+VAR @email, @name
+SET @email = "vsingh1@abcd.com"
+SET @name = "Vikram1"
+InsertDE("Users","Email", @email,"Name", @name)
+SET @insertCount = InsertData("Users","Email", "vsingh2@abcd.com","Name", "Vikram2")
+]%%
+<div> insertCount: %%=v(@insertCount)=%% </div>
+
+<!-- RECORD UPDATION -->
+
+%%[
+/*Lets update records using UpdateDE and UpdateData functions */
+VAR @email, @name
+SET @email = "vsingh1@abcd.com"
+SET @name = "NewVikram1"
+/* Second parameter 1 tells how many filters in where clause, example where Email = @email */
+UpdateDE("Users",1, "Email", @email,"Name", @name, "Created_Date",Now(1))
+SET @updateCount = UpdateData("Users",1,"Email", "vsingh2@abcd.com","Name", "NewVikram2", "Created_Date",Now(1) )
+]%%
+<div> updateCount: %%=v(@updateCount)=%% </div>
+
+
+<!-- RECORD UPSERTION -->
+
+%%[
+/*Lets upsert records using UpsertDE and UpsertData functions */
+VAR @email, @name
+SET @email = "vsingh1@abcd.com"
+SET @name = "NewNewVikram1"
+/* Second parameter 1 tells how many filters in where clause, example where Email = @email */
+UpsertDE("Users",1, "Email", @email,"Name", @name, "Created_Date",Now(1))
+SET @upsertCount = UpsertData("Users",1,"Email", "vsingh2@abcd.com","Name", "NewNewVikram2", "Created_Date",Now(1) )
+]%%
+<div> upsertCount: %%=v(@upsertCount)=%% </div>
+
+
+
+<!-- RECORD DELETION -->
+
+%%[
+/*Lets delete records using DeleteDE and DeleteData functions */
+VAR @email
+SET @email = "vsingh1@abcd.com"
+ DeleteDE("Users","Email", @email)
+SET @deleteCount = DeleteData("Users","Email", "vsingh2@abcd.com" ) 
+]%%
+<div> deleteCount: %%=v(@deleteCount)=%% </div>
+
+<!-- LOOKUP SINGLE COLUMN VALUE OF A RECORD -->
+
+%%[
+VAR @email, @name
+SET @email = "vsingh1@abcd.com"
+SET @name = Lookup("Users","Name","Email", @email)
+]%%
+<div> Name: %%=v(@name)=%%  </div>
+
+<!-- LOOKUP SINGLE COLUMN VALUE OF A RECORD -->
+
+%%[
+VAR @email, @name
+SET @email = "vsingh1@abcd.com"
+SET @name = Lookup("Users","Name","Email", @email)
+]%%
+<div> Name: %%=v(@name)=%%  </div>
+
+<!-- LOOKUP UNORDERED ROWS (Case sensitive as well as Case insensitive) 
+This function returns a set of ordered rows from a Data Extension.
+LookupOrderedRows() and LookupOrderedRowsCS()
+LookupRows() and LookupRowsCS() - for unordered rows
+-->
+
+%%[
+VAR @email
+SET @email = "vsingh1@abcd.com"
+SET @numRowsToReturn = 0 /* 0 means all, max 2000 */
+SET @rows = LookupOrderedRows("Users", @numRowsToReturn, "Created_Date desc, Name asc", "Email", @email)
+SET @rowCount = rowcount(@rows)
+IF @rowCount > 0 THEN
+  FOR @i = 1 to @rowCount DO
+    VAR @name, @email, @rank
+    SET @row = row(@rows, @i) /* get row based on counter */
+    SET @name = field(@row,"Name")
+    SET @email = field(@row,"Email")
+]%%
+
+    <br>Row %%=v(@i)=%%, Name: %%=v(@name)=%%, email: %%=v(@email)=%%
+%%[
+  NEXT @i 
+]%%
+%%[ ELSE ]%%
+No rows found
+%%[ ENDIF ]%%
+
+]%%
+
